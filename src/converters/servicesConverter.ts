@@ -24,7 +24,7 @@ import urlJoin from "url-join";
 import { getDeclaredTypeNameKey, getErrorTypeNameKey } from "../convertToOpenApi";
 import { Mode } from "../writeOpenApi";
 import { convertObject } from "./convertObject";
-import { convertTypeReference, OpenApiComponentSchema } from "./typeConverter";
+import { OpenApiComponentSchema, convertTypeReference } from "./typeConverter";
 
 export function convertServices({
     httpServices,
@@ -138,8 +138,63 @@ function convertHttpEndpoint({
         summary: httpEndpoint.displayName ?? undefined,
     };
 
-    if (httpService.baseUrl != null) {
-        const baseUrlId = httpService.baseUrl;
+    // baseUrl is now located on the httpService.endpoints objects
+    // Is it safe to just use the first endpoint?
+    // httpService for Fern 0.5.2
+    // {
+    //   availability: { status: 'GENERAL_AVAILABILITY' },
+    //   name: {
+    //     fernFilepath: { allParts: [Array], packagePath: [], file: [Object] }
+    //   },
+    //   baseUrl: 'foo',
+    //   basePath: { head: '/', parts: [] },
+    //   headers: [],
+    //   pathParameters: [],
+    //   endpoints: [
+    //     {
+    //       availability: [Object],
+    //       name: [Object],
+    //       auth: false,
+    //       method: 'POST',
+    //       path: [Object],
+    //       pathParameters: [],
+    //       queryParameters: [],
+    //       headers: [],
+    //       errors: [],
+    //       examples: []
+    //     }
+    //   ]
+    // }
+    //
+    // httpService for Fern 0.11.2
+    // {
+    //   availability: { status: 'GENERAL_AVAILABILITY' },
+    //   name: {
+    //     fernFilepath: { allParts: [Array], packagePath: [], file: [Object] }
+    //   },
+    //   basePath: { head: '/', parts: [] },
+    //   headers: [],
+    //   pathParameters: [],
+    //   endpoints: [
+    //     {
+    //       availability: [Object],
+    //       name: [Object],
+    //       auth: false,
+    //       baseUrl: 'foo',
+    //       method: 'POST',
+    //       path: [Object],
+    //       fullPath: [Object],
+    //       pathParameters: [],
+    //       allPathParameters: [],
+    //       queryParameters: [],
+    //       headers: [],
+    //       errors: [],
+    //       examples: []
+    //     }
+    //   ]
+    // }
+    if (httpService.endpoints[0]?.baseUrl) {
+        const baseUrlId = httpService.endpoints[0].baseUrl;
         if (environments?.environments.type !== "multipleBaseUrls") {
             throw new Error("baseUrl is defined environments are not multipleBaseUrls");
         }
